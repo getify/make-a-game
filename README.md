@@ -1,2 +1,3 @@
-# make-a-game
-some project files for a tutorial on making a simple web game
+# Make-A-Game
+
+Some project files for a tutorial on making a simple web game.

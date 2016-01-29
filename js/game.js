@@ -224,7 +224,7 @@
 
 		gameState.jumpScore = 0;
 
-		gameState.faceY = 0;
+		gameState.faceY = viewportDims.height - gameState.faceSize;
 
 		gameState.minAltitude = 10;
 		gameState.maxAltitude = 50;
@@ -261,7 +261,7 @@
 
 		gameState.playEntering = true;
 		gameState.faceXStart = (gameState.faceX = -gameState.faceSize);
-		gameState.faceY = altitudeToViewport(gameState.altitude);
+		// gameState.faceY = altitudeToViewport(gameState.altitude);
 
 		gameState.RAF = requestAnimationFrame(runPlayEntering);
 	}
@@ -300,7 +300,13 @@
 
 			if (gameState.playEnteringTickCount <= gameState.playEnteringTickThreshold) {
 
-				// TODO: enter the scene
+				gameState.faceAngle -= gameState.faceRotatingSpeed;
+				gameState.faceX = gameState.faceXStart + (
+					(gameState.faceXThreshold - gameState.faceXStart) *
+					(gameState.playEnteringTickCount / gameState.playEnteringTickThreshold)
+				);
+
+				drawIntro(1);
 
 				gameState.RAF = requestAnimationFrame(runPlayEntering);
 			}

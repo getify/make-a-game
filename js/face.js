@@ -53,8 +53,10 @@ var Face = (function Face(){
 		obj.width = obj.height = face.scaled.width;
 		obj.cnv.width = obj.cnv.height = obj.width;
 
+		obj.ctx.save();
 		Utils.rotateCanvas(obj.ctx,obj.width/2,obj.height/2,angle);
 		obj.ctx.drawImage(face.scaled.cnv,0,0);
+		obj.ctx.restore();
 
 		return obj;
 	}

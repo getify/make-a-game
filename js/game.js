@@ -47,9 +47,8 @@
 		checkOrientation(),
 	])
 	.then(snapToViewport)
-	.then(initGame)
 	.then(onResize)
-	.then(startPlayEntering);
+	.then(setupGame);
 
 
 	// respond to window resizes
@@ -211,25 +210,9 @@
 		}
 	}
 
-	function manageBestCloudScore() {
-		gameState.bestCloudScore[gameState.difficulty] =
-			Math.max(
-				gameState.cloudScore,
-				gameState.bestCloudScore[gameState.difficulty]
-			);
-	}
-
 	function setupGame() {
 		return Promise.resolve(initGame())
 		.then(startPlayEntering);
-	}
-
-	function fillArray(arr,val,count) {
-		arr.length = count;
-		for (var i=0; i<count; i++) {
-			arr[i] = val;
-		}
-		return arr;
 	}
 
 	function initGame() {

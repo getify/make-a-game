@@ -216,6 +216,9 @@
 	}
 
 	function initGame() {
+
+		// State!
+
 		gameState.bestJumpScore = gameState.bestJumpScore || 0;
 
 		gameState.playEntering = false;
@@ -224,7 +227,9 @@
 
 		gameState.jumpScore = 0;
 
-		gameState.faceY = viewportDims.height - gameState.faceSize;
+		// 50 = height of ground
+		gameState.faceY = viewportDims.height - gameState.faceSize - 50;
+		// decreasing faceY = jump!
 
 		gameState.minAltitude = 10;
 		gameState.maxAltitude = 50;
@@ -235,8 +240,8 @@
 		gameState.faceAngle = 0;
 		gameState.faceRotatingSpeed = 0.1396 * gameState.speedRatio; // ~8 degrees in radians
 
-		gameState.gravity = -0.4;
-		gameState.jump = 1.7;
+		gameState.gravity = -0.2;
+		gameState.jump = 4;
 
 		gameState.playEnteringTickCount = 0;
 		gameState.playEnteringTickThreshold = 60;
@@ -251,6 +256,13 @@
 		gameState.shakeOffsetY = 0;
 		gameState.shakeDeltaX = Math.min(-8,Math.round(-12 * gameState.speedRatio));
 		gameState.shakeDeltaY = Math.min(-5,Math.round(-8 * gameState.speedRatio));
+
+		gameState.groundX = 0;
+		gameState.groundWidth = viewportDims.width + 100;
+
+		// magggicccc
+		gameState.groundSpeed = 1.8333;
+
 	}
 
 	function startPlayEntering() {
@@ -272,6 +284,8 @@
 		gameState.playEntering = false;
 		gameState.playing = true;
 
+		gameState.velocity = gameState.jump;
+
 		setupPlayInteraction();
 
 		gameState.RAF = requestAnimationFrame(runPlaying);
@@ -291,6 +305,9 @@
 	}
 
 	function runPlayEntering() {
+
+		// happy face guy comes in
+
 		trackFramerate();
 
 		gameState.RAF = null;
@@ -305,6 +322,14 @@
 					(gameState.faceXThreshold - gameState.faceXStart) *
 					(gameState.playEnteringTickCount / gameState.playEnteringTickThreshold)
 				);
+
+				gameState.faceY = altitudeToViewport(50);
+
+				gameState.groundX = gameState.groundX - gameState.groundSpeed;
+				// reset if we've gone far enough
+				if (gameState.groundX < -100) {
+					gameState.groundX = 0;
+				}
 
 				drawIntro(1);
 
@@ -328,6 +353,23 @@
 			// keep playing?
 			if (checkFace()) {
 				shakeTick();
+
+				gameState.faceAngle -= gameState.faceRotatingSpeed;
+				gameState.faceX = gameState.faceXStart + (
+					(gameState.faceXThreshold - gameState.faceXStart) *
+					(gameState.playEnteringTickCount / gameState.playEnteringTickThreshold)
+				);
+
+				gameState.groundX = gameState.groundX - gameState.groundSpeed;
+				// reset if we've gone far enough
+				if (gameState.groundX < -100) {
+					gameState.groundX = 0;
+				}
+
+
+				gameState.velocity += gameState.gravity;
+
+				gameState.altitude = constrainAltitude(gameState.altitude + gameState.velocity);
 
 				// paint the canvas
 				drawGameScene();
@@ -368,8 +410,10 @@
 
 		sceneCtx.globalAlpha = drawOpacity;
 
+		drawGround();
+
 		var face = Face.getFace(gameState.faceAngle);
-		sceneCtx.drawImage(face.cnv,gameState.faceX,gameState.faceY);
+		sceneCtx.drawImage(face.cnv,gameState.faceX,altitudeToViewport(gameState.altitude));
 
 		showFramerate();
 	}
@@ -383,8 +427,10 @@
 			sceneCtx.translate(gameState.shakeOffsetX,gameState.shakeOffsetY);
 		}
 
+		drawGround();
+
 		var face = Face.getFace(gameState.faceAngle);
-		sceneCtx.drawImage(face.cnv,gameState.faceX,gameState.faceY);
+		sceneCtx.drawImage(face.cnv,gameState.faceX,altitudeToViewport(gameState.altitude));
 
 		// offset scene drawing for shaking
 		if (gameState.sceneShaking) {
@@ -425,8 +471,15 @@
 	}
 
 	function altitudeToViewport(altd) {
-		// TODO!
-		return 0;
+		var px;
+
+		// 0 * ?? - 
+
+		var ratio = (1 - ((altd - 10) / (gameState.maxAltitude - gameState.minAltitude)));
+
+		px = (((viewportDims.height - gameState.faceSize - 50) - (viewportDims.height / 3)) * ratio) + (viewportDims.height / 3);
+
+		return px;
 	}
 
 	function gravity() {
@@ -516,6 +569,18 @@
 				gameState.shakeDeltaX = Math.min(-8,Math.round(-12 * gameState.speedRatio));
 				gameState.shakeDeltaY = Math.min(-5,Math.round(-8 * gameState.speedRatio));
 			}
+		}
+	}
+
+	function drawGround() {
+		sceneCtx.fillStyle = "brown";
+		sceneCtx.fillRect(gameState.groundX, viewportDims.height - 50, viewportDims.width + 100, 50);
+		sceneCtx.strokeStyle = "black";
+		for (var x = gameState.groundX; x <= viewportDims.width + 100; x = x + (gameState.groundSpeed * 50)) {
+			sceneCtx.beginPath();
+			sceneCtx.moveTo(x, viewportDims.height - 50);
+			sceneCtx.lineTo(x, viewportDims.height);
+			sceneCtx.stroke();
 		}
 	}
 

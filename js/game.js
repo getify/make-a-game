@@ -216,9 +216,6 @@
 	}
 
 	function initGame() {
-
-		// State!
-
 		gameState.bestJumpScore = gameState.bestJumpScore || 0;
 
 		gameState.playEntering = false;
@@ -323,7 +320,7 @@
 					(gameState.playEnteringTickCount / gameState.playEnteringTickThreshold)
 				);
 
-				gameState.faceY = altitudeToViewport(50);
+				gameState.faceY = altitudeToViewport(gameState.altitude);
 
 				gameState.groundX = gameState.groundX - gameState.groundSpeed;
 				// reset if we've gone far enough
@@ -355,21 +352,17 @@
 				shakeTick();
 
 				gameState.faceAngle -= gameState.faceRotatingSpeed;
-				gameState.faceX = gameState.faceXStart + (
-					(gameState.faceXThreshold - gameState.faceXStart) *
-					(gameState.playEnteringTickCount / gameState.playEnteringTickThreshold)
-				);
+
+				gameState.velocity += gameState.gravity;
+
+				gameState.altitude = constrainAltitude(gameState.altitude + gameState.velocity);
+				gameState.faceY = altitudeToViewport(gameState.altitude);
 
 				gameState.groundX = gameState.groundX - gameState.groundSpeed;
 				// reset if we've gone far enough
 				if (gameState.groundX < -100) {
 					gameState.groundX = 0;
 				}
-
-
-				gameState.velocity += gameState.gravity;
-
-				gameState.altitude = constrainAltitude(gameState.altitude + gameState.velocity);
 
 				// paint the canvas
 				drawGameScene();
@@ -413,7 +406,7 @@
 		drawGround();
 
 		var face = Face.getFace(gameState.faceAngle);
-		sceneCtx.drawImage(face.cnv,gameState.faceX,altitudeToViewport(gameState.altitude));
+		sceneCtx.drawImage(face.cnv,gameState.faceX,gameState.faceY);
 
 		showFramerate();
 	}
@@ -430,7 +423,7 @@
 		drawGround();
 
 		var face = Face.getFace(gameState.faceAngle);
-		sceneCtx.drawImage(face.cnv,gameState.faceX,altitudeToViewport(gameState.altitude));
+		sceneCtx.drawImage(face.cnv,gameState.faceX,gameState.faceY);
 
 		// offset scene drawing for shaking
 		if (gameState.sceneShaking) {
@@ -471,15 +464,16 @@
 	}
 
 	function altitudeToViewport(altd) {
-		var px;
+		var ratio = (1 -
+			((altd - 10) / (gameState.maxAltitude - gameState.minAltitude))
+		);
 
-		// 0 * ?? - 
-
-		var ratio = (1 - ((altd - 10) / (gameState.maxAltitude - gameState.minAltitude)));
-
-		px = (((viewportDims.height - gameState.faceSize - 50) - (viewportDims.height / 3)) * ratio) + (viewportDims.height / 3);
-
-		return px;
+		return (
+			(
+				(viewportDims.height - gameState.faceSize - 50) -
+				(viewportDims.height / 3)
+			) * ratio
+		) + (viewportDims.height / 3);
 	}
 
 	function gravity() {
@@ -573,10 +567,16 @@
 	}
 
 	function drawGround() {
+		// draw ground base
 		sceneCtx.fillStyle = "brown";
 		sceneCtx.fillRect(gameState.groundX, viewportDims.height - 50, viewportDims.width + 100, 50);
+
+		// draw ground lines
 		sceneCtx.strokeStyle = "black";
-		for (var x = gameState.groundX; x <= viewportDims.width + 100; x = x + (gameState.groundSpeed * 50)) {
+		for (var x = gameState.groundX;
+			x <= viewportDims.width + 100;
+			x = x + (gameState.groundSpeed * 50)
+		) {
 			sceneCtx.beginPath();
 			sceneCtx.moveTo(x, viewportDims.height - 50);
 			sceneCtx.lineTo(x, viewportDims.height);
